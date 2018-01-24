@@ -3,7 +3,7 @@ declare module "redis" {
   declare class RedisClient extends events$EventEmitter mixins RedisClientPromisified {
     hmset: (key: string, map: any, callback: (?Error) => void) => void;
     rpush: (key: string, value: string, callback: (?Error) => void) => void;
-    lpush: (key: string, value: any) => number;
+    lpush: (key: string, value: string, callback?: (?Error, number) => void) => void;
     lrem: (
       topic: string,
       cursor: number,
@@ -12,16 +12,23 @@ declare module "redis" {
     lrange: (
       topic: string,
       cursor: number,
-      cursor2: number
-    ) => Array<string> | void;
+      cursor2: number,
+      (error: Error | null, entries: Array<string>) => void
+    ) => boolean;
+    llen: (key: string, (error: Error | null, length: number) => void) => boolean;
     hset: (topic: string, key: string, value: string) => number;
     hget: (topic: string, key: string, value: string) => string | void;
     hgetall: (topic: string, key: string) => Array<string> | void;
     hdel: (topic: string, key: string) => number;
-    get: (key: string) => any;
-    set: (key: string, value: any) => void;
-    del: (...keys: Array<string>) => void;
+    get: (key: string, (Error | null, string | null) => void) => void;
+    set: (key: string, value: string, cb?: (error: Error | null) => void) => void;
+    setex: (key: string, timeout: number, value: string, callback?: (error: ?Error, result: ?string) => void) => void;
+    ttl: (key: string, callback: (error: ?Error, ttl: ?number) => void) => void;
+    del: (keys: Array<string>, cb?: (Error | null) => void) => void;
+    mget: (keys: Array<string>, (Error | null, Array<string | null>) => void) => void;
+    mset: (keysAndValues: Array<string>, cb?: (Error | null) => void) => void;
     rpoplpush: (source: string, destination: string) => string | void;
+    flushall: (cb?: (Error | null) => void) => void;
     publish: (topic: string, value: any) => void;
     subscribe: (topic: string) => void;
     unsubscribe: (topic: string) => void;
@@ -53,7 +60,7 @@ declare module "redis" {
       topic: string,
       cursor: number,
       cursor2: number
-    ) => Promise<Array<string>> | Promise<void>;
+    ) => Promise<Array<string>>;
     hsetAsync: (topic: string, key: string, value: string) => Promise<number>;
     hgetAsync: (topic: string, key: string) => Promise<string> | Promise<void>;
     hgetallAsync: (
